@@ -39,6 +39,19 @@ def savedata():
         save_p['catch_flag']=False
         messagebox.showwarning('警告', '数据量请输入数字')
     pass
+def test_a():
+    try:
+        ta.config(state=tk.DISABLED)
+        global test_area
+        test_area['ta_num'] = int(V1.get())
+        test_area['ta_flag'] = True
+        test_area['ta_fname'] = V2.get() + '.csv'
+    except Exception as e:
+        print(e)
+        ta.config(state=tk.ACTIVE)
+        test_area['catch_flag']=False
+        messagebox.showwarning('警告', '数据量请输入数字')
+    pass
 
 
 def video():
@@ -60,19 +73,19 @@ def video():
                 if save_p['finish']:
                     save_p['finish']=False
                     b.config(state=tk.ACTIVE)
-
+                if test_area['finish']:
+                    test_area['finish']=False
+                    ta.config(state=tk.ACTIVE)
                 image1 = cv2.resize(image1, (image_width, image_height))
                 pilImage1 = Image.fromarray(image1)
                 if tag['tags'] != None and type(tag['tags'][1]) == list:
                     # print(tag['tags'][1][0])  # tag['tags']包含三个，第一个是状态位，第二个保存tag，第三个保存id
                     if type(tag['tags'][1][0]) == Tag:
                         '''str object doesn't has points'''
-                        value_tag1_z['text'] = tag['tags'][1][0].points[0][
-                                                   2] * 1000  # round(tagpos['dis'][1][0].points[0][2]*1000,15)
-                        value_tag1_y['text'] = tag['tags'][1][0].points[0][
-                                                   1] * 1000  # round(tagpos['dis'][1][0].points[0][1]*1000,15)
-                        value_tag1_x['text'] = tag['tags'][1][0].points[0][
-                                                   0] * 1000  # round(tagpos['dis'][1][0].points[0][0]*1000,15)
+                        value_tag1_z['text'] = tag['tags'][1][0].points[0][2] * 1000
+                        # round(tagpos['dis'][1][0].points[0][2]*1000,15)
+                        value_tag1_y['text'] = tag['tags'][1][0].points[0][1] * 1000  # round(tagpos['dis'][1][0].points[0][1]*1000,15)
+                        value_tag1_x['text'] = tag['tags'][1][0].points[0][0] * 1000  # round(tagpos['dis'][1][0].points[0][0]*1000,15)
                         value_tag1_rz['text'] = tag['tags'][1][0].rotation[
                             2]  # round(tagpos['dis'][1][0].rotation[2], 15)
                         value_tag1_ry['text'] = tag['tags'][1][0].rotation[
@@ -157,6 +170,8 @@ cc = tk.Button(win, text='角度测试', font=('Arial', 12), width=10, height=1,
 cc.place(x=70, y=470)
 cc = tk.Button(win, text='位移测试', font=('Arial', 12), width=10, height=1, command=testmov)
 cc.place(x=70, y=510)
+ta = tk.Button(win, text='范围测试', font=('Arial', 12), width=10, height=1, command=test_a)
+ta.place(x=70, y=550)
 canvas2 = Canvas(win, bg='white', width=image_width, height=image_height)
 canvas2.place(x=360, y=0)
 canvas4 = Canvas(win, bg='white', width=image_width, height=image_height)

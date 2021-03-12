@@ -22,9 +22,9 @@ R1, R2, P1, P2, Q, roi1, roi2 = cv2.stereoRectify(camera_matrix1, dist_coeffs1, 
 map1x, map1y = cv2.initUndistortRectifyMap(camera_matrix1, dist_coeffs1, R1, P1, (width, height), cv2.CV_32FC1)
 map2x, map2y = cv2.initUndistortRectifyMap(camera_matrix2, dist_coeffs2, R2, P2, (width, height), cv2.CV_32FC1)
 # 畸变校正和立体校正
-pic1 = cv2.imread('0cam1.bmp')
-pic2 = cv2.imread('0cam2.bmp')
+pic1 = cv2.imread('00.bmp')
+pic2 = cv2.imread('01.bmp')
 rectifyed_img1 = cv2.remap(pic1, map1x, map1y, cv2.INTER_AREA)
 rectifyed_img2 = cv2.remap(pic2, map2x, map2y, cv2.INTER_AREA)
-cv2.imwrite("img3.bmp", rectifyed_img1)
-cv2.imwrite("img4.bmp", rectifyed_img2)
+cv2.imwrite("img5.bmp", rectifyed_img1)
+cv2.imwrite("img6.bmp", rectifyed_img2)

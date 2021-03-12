@@ -4,8 +4,8 @@ import numpy as np
 import cv2
 from TagsInfo.tools import *
 import time
-
-
+import pandas as pd
+import os
 class Tag:
     def __init__(self, points, disToSurface, rotation):
         '''
@@ -41,10 +41,11 @@ def getROI(img): #返回全图
             minpixhang = min(minpixhang, detectroi[i].corners[j][1])
             minpixlie = min(minpixlie, detectroi[i].corners[j][0])
     if minpixlie != 4095:
-        list = [[max((int)(minpixhang * 2 - 5), 0), max((int)(minpixlie * 2 - 5), 0)],
-                [min((int)(maxpixhang * 2 + 5), 2999), min((int)(maxpixlie * 2 + 5), 4095)]]
+        list = [[max((int)(minpixhang * 2 - 20), 0), max((int)(minpixlie * 2 - 20), 0)],
+                [min((int)(maxpixhang * 2 + 20), 2999), min((int)(maxpixlie * 2 + 20), 4095)]]
     else:
         list = [[maxpixhang, maxpixlie], [minpixhang, minpixlie]]
+    # print(list)
     return list
 
 
@@ -162,9 +163,15 @@ def getTagInfo(img, flag,R_now,P_now):
 
         roi_before_equalized = gray[int(ROI[0][0]):int(ROI[1][0] + 1), int(ROI[0][1]):int(ROI[1][1] + 1)]
         # print(ROI)
+        # if flag==0:
+        #
+        #     cv2.imwcv2.imwrite("img7.bmp", roi_before_equalized)
+        # else:
+        #     cv2.imwrite("img8.bmp", roi_before_equalized)
         try:
             detectroi = at_detector.detect(roi_before_equalized,
                                        estimate_tag_pose=False, camera_params=None, tag_size=None)
+
             for numm in range(len(detectroi)):
                 if detectroi[numm].tag_id not in idDict:
                     k = len(idDict)
@@ -192,7 +199,7 @@ def getTagInfo(img, flag,R_now,P_now):
                     subPoints=cv2.undistortPoints(subPoints_raw,camera_matrix1,dist_coeffs1,R=R_now,P=P_now)
                 else:
                     subPoints=cv2.undistortPoints(subPoints_raw, camera_matrix2, dist_coeffs2,R=R_now,P=P_now)
-                print("point:", subPoints[0])
+                # print("point:", subPoints[0])
                 subPoints.shape=(-1,2)
                 subPoints_raw.shape = (-1, 2)
                 # print(subPoints)
@@ -424,11 +431,48 @@ def getTags(img1, img2,P1, P2,R1,R2):
             #                 getangle(xAxis,yAxis,zAxis)))
             # print("-------------------------------------------------")
             # for i in range(4):
-            #     print("length:"+str(i), 100 * sqrt(
+            #     print("length:"+str(i), 1000 * sqrt(
             #     (tags[0].points[i][2] - tags[0].points[(i+1)%4][2]) * (tags[0].points[i][2] - tags[0].points[(i+1)%4][2]) +
             #     (tags[0].points[i][1] - tags[0].points[(i+1)%4][1]) * (tags[0].points[i][1] - tags[0].points[(i+1)%4][1]) +
             #     (tags[0].points[i][0] - tags[0].points[(i+1)%4][0]) * (tags[0].points[i][0] - tags[0].points[(i+1)%4][0])))
 
+
+
+            if test_area['ta_flag'] and len(test_area['ta_v'])/4 < test_area['ta_num']:
+                print(len(test_area['ta_v'])/4)
+                for i in range(4):
+                    s_len=1000 * sqrt(
+                (tags[0].points[i][2] - tags[0].points[(i+1)%4][2]) * (tags[0].points[i][2] - tags[0].points[(i+1)%4][2]) +
+                (tags[0].points[i][1] - tags[0].points[(i+1)%4][1]) * (tags[0].points[i][1] - tags[0].points[(i+1)%4][1]) +
+                (tags[0].points[i][0] - tags[0].points[(i+1)%4][0]) * (tags[0].points[i][0] - tags[0].points[(i+1)%4][0]))
+                    test_area['ta_v'].append(s_len)
+            elif test_area['ta_flag'] and len(test_area['ta_v'])/4 == test_area['ta_num']:
+                if os.path.exists(test_area['ta_fname']):
+                    data = pd.read_csv(test_area['ta_fname'])
+                    data1=[]
+                    data1.append(" y:" + str(tagpos['tags'][1][0].points[0][1] * 1000))
+                    data1.append(" x:" + str(tagpos['tags'][1][0].points[0][0] * 1000))
+                    data1+=test_area['ta_v']
+                    data1.append(max(test_area['ta_v'])-min(test_area['ta_v']))
+                    data["z:"+str(tagpos['tags'][1][0].points[0][2] * 1000)]=data1
+                    data.to_csv(test_area['ta_fname'], mode='w', index=False)
+                else:
+                    with open(test_area['ta_fname'], 'w', newline='') as f:
+                        mywrite = csv.writer(f)
+                        da = []
+                        da.append("z:"+str(tagpos['tags'][1][0].points[0][2] * 1000))
+                        da.append(" y:" + str(tagpos['tags'][1][0].points[0][1] * 1000))
+                        da.append(" x:" + str(tagpos['tags'][1][0].points[0][0] * 1000))
+                        for lda in range(3):
+                            mywrite.writerow([da[lda]])
+                        for taa in test_area['ta_v']:
+                            mywrite.writerow([str(taa)])
+                        mywrite.writerow([max(test_area['ta_v'])-min(test_area['ta_v'])])
+                print("output")
+                test_area['ta_v'].clear()
+                # b.config(state=tk.ACTIVE)
+                test_area['ta_flag'] = False
+                test_area['finish'] = True
 
         if roi_p["initstart"]:
             if roi_p["initnum"] < 2:
@@ -459,16 +503,16 @@ def tags_2points(tagps):
     '''
     maxpixhang = 0
     maxpixlie = 0
-    minpixhang = 2047
-    minpixlie = 2591
+    minpixhang = 2999
+    minpixlie = 4095
     for points in tagps:
         maxpixhang = max(maxpixhang, points[1])
         maxpixlie = max(maxpixlie,points[0])
         minpixhang = min(minpixhang, points[1])
         minpixlie = min(minpixlie, points[0])
-    if minpixlie != 2591:
-        list = [[max((int)(minpixhang - 50), 0), max((int)(minpixlie - 50), 0)],
-                [min((int)(maxpixhang + 50), 2047), min((int)(maxpixlie + 50), 2591)]]
+    if minpixlie != 4095:
+        list = [[max((int)(minpixhang - 100), 0), max((int)(minpixlie - 100), 0)],
+                [min((int)(maxpixhang + 100), 2999), min((int)(maxpixlie + 100), 4095)]]
     else:
         list = [[maxpixhang, maxpixlie], [minpixhang, minpixlie]]
     return list

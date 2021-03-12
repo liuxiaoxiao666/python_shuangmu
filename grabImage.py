@@ -316,7 +316,7 @@ def main():
     Stop_thread(pic_cam1_thread)
     Stop_thread(pic_cam0_thread)
     Stop_thread(calculate)
-    system_release()
+    # system_release()
 
 
 if __name__ == '__main__':

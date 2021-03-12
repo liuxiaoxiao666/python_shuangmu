@@ -64,17 +64,17 @@ def camParam_Initialize(camID):
         return False
     # 根据相机序列号判断是否需要进行更换，左相机为主相机
     global camp1,camp2
-    camp1=cam_list[0]
-    camp2=cam_list[1]
     nodemap_tldevice = cam_list[0].GetTLDeviceNodeMap()
     node_device_vendor_name = PySpin.CStringPtr(nodemap_tldevice.GetNode('DeviceSerialNumber'))
-    device_vendor_name="17023542"
+    device_vendor_name = "17023542"
     if PySpin.IsAvailable(node_device_vendor_name) and PySpin.IsReadable(node_device_vendor_name):
         device_vendor_name = node_device_vendor_name.ToString()
     print(device_vendor_name)
-    # if device_vendor_name !=cameraSerialNumber[0]:
-    #     cam_list[0],cam_list[1]=cam_list[1],cam_list[0]
-    # Run example on each camera
+    camp1 = cam_list[0]
+    camp2 = cam_list[1]
+    if device_vendor_name != cameraSerialNumber[0]:
+        camp1 = cam_list[1]
+        camp2 = cam_list[0]
     for i, cam in enumerate(cam_list):
         try:
             nodemap_tldevice = cam.GetTLDeviceNodeMap()
@@ -206,7 +206,7 @@ def getNextImage_cam0():
     # print("Gain", cam.Gain.GetValue())
     # print("Exposure time", cam.ExposureTime.GetValue())
     # global camp1
-    global bdflag,cnt,img_list
+    global bdflag,cnt,img_list,camp1
 
     while True:
         try:
@@ -227,11 +227,11 @@ def getNextImage_cam0():
             cv2.imshow("camera0", img_list['img1'])
             #按esc保存图片
             if cv2.waitKey(2) == 27 and bdflag==0:
-                cv2.imwrite("R/"+str(cnt)+".bmp",img_list['img1'])
+                cv2.imwrite(str(cnt)+"0.bmp",img_list['img1'])
 
                 bdflag =1
             elif bdflag==2:
-                cv2.imwrite("R/"+str(cnt)+".bmp",img_list['img1'])
+                cv2.imwrite(str(cnt)+"0.bmp",img_list['img1'])
                 cnt+=1
                 bdflag = 0
 
@@ -240,7 +240,7 @@ def getNextImage_cam0():
             pass
 
 def getNextImage_cam1():
-    global bdflag,cnt,img_list
+    global bdflag,cnt,img_list,camp2
     while True:
         try:
             image_result=camp2.GetNextImage(1000)
@@ -258,11 +258,11 @@ def getNextImage_cam1():
             cv2.imshow("camera1", img_list['img2'])
 
             if cv2.waitKey(2) == 27 and bdflag==0:
-                cv2.imwrite("L/"+str(cnt)+".bmp",img_list['img2'])
+                cv2.imwrite(str(cnt)+"1.bmp",img_list['img2'])
 
                 bdflag=2
             elif bdflag==1:
-                cv2.imwrite("L/"+str(cnt)+".bmp",img_list['img2'])
+                cv2.imwrite(str(cnt)+"1.bmp",img_list['img2'])
                 cnt+=1
                 bdflag=0
 
