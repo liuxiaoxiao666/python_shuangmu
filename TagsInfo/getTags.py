@@ -391,14 +391,42 @@ def getTags(img1, img2,P1, P2,R1,R2):
             # print(points3d)
             if testmovdist['flagmov']==True:
                 print("testmove")
-                testmovdist['xnow']=points3d[0][0]
-                testmovdist['ynow'] = points3d[0][1]
-                testmovdist['znow'] = points3d[0][2]
-                testmovdist['flagmov'] =False
-                testmovdist['flagmov2'] =True
+                if testmovdist['init_num']<100:
+                    testmovdist['xsum']+=points3d[0][0]
+                    testmovdist['ysum'] += points3d[0][1]
+                    testmovdist['zsum'] += points3d[0][2]
+                    testmovdist['init_num']+=1
+                else:
+                    testmovdist['xnow']=testmovdist['xsum']/100
+                    testmovdist['ynow'] = testmovdist['ysum']/100
+                    testmovdist['znow'] = testmovdist['zsum']/100
+                    testmovdist['flagmov'] =False
+                    testmovdist['flagmov2'] =True
             if testmovdist['flagmov2'] ==True:
-                mov=((points3d[0][0]-testmovdist['xnow'])**2+(points3d[0][1]-testmovdist['ynow'])**2+(points3d[0][2]-testmovdist['znow'])**2)**0.5
-                print(mov*1000)
+                mov=1000*((points3d[0][0]-testmovdist['xnow'])**2+(points3d[0][1]-testmovdist['ynow'])**2+(points3d[0][2]-testmovdist['znow'])**2)**0.5
+                print(mov)
+                print("round:",testmovdist['wd_cnt'])
+                if testmovdist['save']==True:
+                    testmovdist['wd_v'].append(mov)
+                    if len(testmovdist['wd_v'])==testmovdist['wd_num']:
+                        if os.path.exists(testmovdist['wd_fname']):
+                            data = pd.read_csv(testmovdist['wd_fname'])
+                            data["round:"+str(testmovdist['wd_cnt'])]=testmovdist['wd_v']
+
+                            data.to_csv(testmovdist['wd_fname'], mode='w', index=False)
+                            testmovdist['wd_cnt'] += 1
+                        else:
+                            with open(testmovdist['wd_fname'], 'w', newline='') as f:
+                                mywrite = csv.writer(f)
+                                mywrite.writerow(["round:0"])
+                                for twd2 in range(testmovdist['wd_num']):
+                                    mywrite.writerow([str(testmovdist['wd_v'][twd2])])
+                                testmovdist['wd_cnt'] += 1
+                        print("output")
+                        testmovdist['wd_v'].clear()
+                        # b.config(state=tk.ACTIVE)
+                        testmovdist['save']= False
+
             xAxis=100*(points3d[1]-points3d[0])
             yAxis=100*(points3d[3]-points3d[0])
             zAxis=np.cross(xAxis, yAxis)

@@ -65,7 +65,16 @@ testmovdist={
 'flagmov2':False,
 'xnow':0,
 'ynow':0,
-'znow':0
+'znow':0,
+'save':False,
+'wd_num':0,
+'wd_fname':'',
+'wd_cnt':0,
+'wd_v':[],
+'init_num':0,
+'xsum':0,
+'ysum':0,
+'zsum':0,
 }
 
 '''用于区域的提取保存'''

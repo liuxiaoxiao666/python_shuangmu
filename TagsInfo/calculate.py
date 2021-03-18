@@ -71,6 +71,7 @@ def calculateThread():
             if type(res[1][0]) == Tag:
                 if save_p['catch_flag'] and len(save_p['catch_v']) < save_p['catch_num']:
                     print(len(save_p['catch_v']))
+
                     save_p['catch_v'].append(res[1])
                 elif save_p['catch_flag'] and len(save_p['catch_v']) == save_p['catch_num']:
                     with open(save_p['catch_fname'], 'w', newline='') as f:
@@ -83,7 +84,9 @@ def calculateThread():
                         for tags in save_p['catch_v']:
                             data = []
                             for tag in tags:
-                                data += tag.points[0].tolist()
+                                temtaag=tag.points[0]*1000
+                                data += temtaag.tolist()
+
                                 data += tag.rotation
                             mywrite.writerow(data)
                     print("output")
