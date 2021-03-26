@@ -26,7 +26,7 @@ def getROI(img): #返回全图
     '''img.shape:(2048*2592),设定2048为行数'''
     resize_num = 2
     imgresize = cv2.resize(img, ((int)(img.shape[1] / resize_num), (int)(img.shape[0] / resize_num)))
-    detectroi = at_detector.detect(imgresize, estimate_tag_pose=False, camera_params=None, tag_size=None)
+    detectroi = at_detector.detect(imgresize)
     # if len(detectroi)!=0:
     #     print("detectroi:",detectroi[0].corners)
     list = []
@@ -41,8 +41,8 @@ def getROI(img): #返回全图
             minpixhang = min(minpixhang, detectroi[i].corners[j][1])
             minpixlie = min(minpixlie, detectroi[i].corners[j][0])
     if minpixlie != 4095:
-        list = [[max((int)(minpixhang * 2 - 20), 0), max((int)(minpixlie * 2 - 20), 0)],
-                [min((int)(maxpixhang * 2 + 20), 2999), min((int)(maxpixlie * 2 + 20), 4095)]]
+        list = [[max((int)(minpixhang * 2 - 50), 0), max((int)(minpixlie * 2 - 50), 0)],
+                [min((int)(maxpixhang * 2 + 50), 2999), min((int)(maxpixlie * 2 + 50), 4095)]]
     else:
         list = [[maxpixhang, maxpixlie], [minpixhang, minpixlie]]
     # print(list)
@@ -61,12 +61,15 @@ def get3d(t1, t2, intr, B, tagIndex):
     '''
     # print(intr[0][0])
     t1 = np.array(t1)
+
     t2 = np.array(t2)
     points3d = []
     tempZ0 = intr[0][0] * B / (t1 - t2)[0][0]
+    # print(intr[0][0])
+    # print((t1 - t2)[0][0])
     avewinsize=60
     global ave, avepoints, jittycnt, count, depthlistpoints, depthlist, subPointsCntL, subPointsCntR
-    if (fabs(tempZ0 - ave[tagIndex]) * 1000) > 0.08:
+    if (fabs(tempZ0 - ave[tagIndex]) * 1000) > 0.14:
         # print(ave[tagIndex])
         jittycnt[tagIndex] += 1
         if jittycnt[tagIndex] >= 2:
@@ -169,8 +172,7 @@ def getTagInfo(img, flag,R_now,P_now):
         # else:
         #     cv2.imwrite("img8.bmp", roi_before_equalized)
         try:
-            detectroi = at_detector.detect(roi_before_equalized,
-                                       estimate_tag_pose=False, camera_params=None, tag_size=None)
+            detectroi = at_detector.detect(roi_before_equalized)
 
             for numm in range(len(detectroi)):
                 if detectroi[numm].tag_id not in idDict:
@@ -389,12 +391,13 @@ def getTags(img1, img2,P1, P2,R1,R2):
             points3d = np.array(points3d)
             # 得到位姿
             # print(points3d)
+            pnum=0
             if testmovdist['flagmov']==True:
                 print("testmove")
                 if testmovdist['init_num']<100:
-                    testmovdist['xsum']+=points3d[0][0]
-                    testmovdist['ysum'] += points3d[0][1]
-                    testmovdist['zsum'] += points3d[0][2]
+                    testmovdist['xsum']+=points3d[pnum][0]
+                    testmovdist['ysum'] += points3d[pnum][1]
+                    testmovdist['zsum'] += points3d[pnum][2]
                     testmovdist['init_num']+=1
                 else:
                     testmovdist['xnow']=testmovdist['xsum']/100
@@ -403,7 +406,8 @@ def getTags(img1, img2,P1, P2,R1,R2):
                     testmovdist['flagmov'] =False
                     testmovdist['flagmov2'] =True
             if testmovdist['flagmov2'] ==True:
-                mov=1000*((points3d[0][0]-testmovdist['xnow'])**2+(points3d[0][1]-testmovdist['ynow'])**2+(points3d[0][2]-testmovdist['znow'])**2)**0.5
+                mov=1000*((points3d[pnum][0]-testmovdist['xnow'])**2+(points3d[pnum][1]-testmovdist['ynow'])**2
+                          +(points3d[pnum][2]-testmovdist['znow'])**2)**0.5
                 print(mov)
                 print("round:",testmovdist['wd_cnt'])
                 if testmovdist['save']==True:
@@ -459,10 +463,11 @@ def getTags(img1, img2,P1, P2,R1,R2):
             #                 getangle(xAxis,yAxis,zAxis)))
             # print("-------------------------------------------------")
             # for i in range(4):
-            #     print("length:"+str(i), 1000 * sqrt(
-            #     (tags[0].points[i][2] - tags[0].points[(i+1)%4][2]) * (tags[0].points[i][2] - tags[0].points[(i+1)%4][2]) +
-            #     (tags[0].points[i][1] - tags[0].points[(i+1)%4][1]) * (tags[0].points[i][1] - tags[0].points[(i+1)%4][1]) +
-            #     (tags[0].points[i][0] - tags[0].points[(i+1)%4][0]) * (tags[0].points[i][0] - tags[0].points[(i+1)%4][0])))
+            #     if i==1:
+            #         print("length:"+str(i), 1000 * sqrt(
+            #         (tags[0].points[i][2] - tags[0].points[(i+1)%4][2]) * (tags[0].points[i][2] - tags[0].points[(i+1)%4][2]) +
+            #         (tags[0].points[i][1] - tags[0].points[(i+1)%4][1]) * (tags[0].points[i][1] - tags[0].points[(i+1)%4][1]) +
+            #         (tags[0].points[i][0] - tags[0].points[(i+1)%4][0]) * (tags[0].points[i][0] - tags[0].points[(i+1)%4][0])))
 
 
 
@@ -539,8 +544,10 @@ def tags_2points(tagps):
         minpixhang = min(minpixhang, points[1])
         minpixlie = min(minpixlie, points[0])
     if minpixlie != 4095:
-        list = [[max((int)(minpixhang - 100), 0), max((int)(minpixlie - 100), 0)],
-                [min((int)(maxpixhang + 100), 2999), min((int)(maxpixlie + 100), 4095)]]
+        addhang=(maxpixhang-minpixhang)*0.15
+        addlie = (maxpixlie - minpixlie) * 0.15
+        list = [[max((int)(minpixhang - addhang), 0), max((int)(minpixlie - addlie), 0)],
+                [min((int)(maxpixhang + addhang), 2999), min((int)(maxpixlie + addlie), 4095)]]
     else:
         list = [[maxpixhang, maxpixlie], [minpixhang, minpixlie]]
     return list

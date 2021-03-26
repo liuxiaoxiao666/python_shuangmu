@@ -164,10 +164,15 @@ def camParam_Initialize(camID):
 
             # Set the absolute value of gamma to 1.5
             # cam.Gamma.SetValue(1.25)
-            # Turn off auto exposure
-            cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Once)
+            # Turn off auto exposure 自动曝光
+            # cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Once)
 
             # Set exposure mode to "Timed"
+            cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
+            exposure_time_to_set = 13500
+            exposure_time_to_set = min(cam.ExposureTime.GetMax(), exposure_time_to_set)
+            cam.ExposureTime.SetValue(exposure_time_to_set)
+            print('Shutter time set to %s us...\n' % exposure_time_to_set)
             # cam.ExposureMode.SetValue(PySpin.ExposureMode_Timed)
             # cam.ExposureTime.SetValue(4000)
 
