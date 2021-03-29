@@ -436,11 +436,18 @@ def getTags(img1, img2,P1, P2,R1,R2):
             zAxis=np.cross(xAxis, yAxis)
             if testangledist['flagangle']==True:
                 print("testangle")
-                testangledist['xnow'] = xAxis
-                testangledist['ynow'] = yAxis
-                testangledist['znow'] = zAxis
-                testangledist['flagangle'] = False
-                testangledist['flagangle2']=True
+                if testangledist['init_num'] < 100:
+                    testangledist['xsum'] += xAxis
+                    testangledist['ysum'] += yAxis
+                    testangledist['init_num'] += 1
+                else:
+                    testangledist['xnow']=testangledist['xsum']/100
+                    testangledist['ynow'] = testangledist['ysum']/100
+                    zAxis = np.cross(testangledist['xnow'], testangledist['ynow'])
+                    testangledist['znow'] = zAxis
+                    testangledist['flagangle'] = False
+                    testangledist['flagangle2'] = True
+
             if testangledist['flagangle2']==True:
                 h = np.array([[getcos(testangledist['xnow'], xAxis), getcos(testangledist['xnow'], yAxis), getcos(testangledist['xnow'], zAxis)],
                               [getcos(testangledist['ynow'], xAxis), getcos(testangledist['ynow'], yAxis), getcos(testangledist['ynow'], zAxis)],
@@ -448,7 +455,11 @@ def getTags(img1, img2,P1, P2,R1,R2):
                 dst,jacobian=cv2.Rodrigues(h)
                 # print(dst)
                 dst2=np.linalg.norm(dst)
-                print(dst2/math.pi*180)
+                ag=dst2/math.pi*180
+                testangledist['agv'].append(ag)
+                if len(testangledist['agv'])==30:
+                    print(mean(testangledist['agv']))
+                    testangledist['agv'].clear()
             # success, rotation, translation,inliers = cv2.solvePnPRansac(points3d, tagsL[i], camera_matrix1, dist_coeffs1,flags=cv2.SOLVEPNP_ITERATIVE
             tags.append(Tag(points3d, getDisToSurface(points3d[0], points3d[1], points3d[2]),
                             getangle(xAxis,yAxis,zAxis)))
