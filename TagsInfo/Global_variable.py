@@ -1,7 +1,7 @@
 import numpy as np
 import threading
 import pupil_apriltags as apriltag
-import ac_tag as apriltag
+import ac_tag as actag
 exitFlag = False
 
 tagnum=20
@@ -41,8 +41,10 @@ leftCameraJittyList = [0 for i in range(tagnum)]
 rightCameraJittyList = [0 for i in range(tagnum)]
 subaveleft = [0 for i in range(tagnum)]
 subaveright = [0 for j in range(tagnum)]
-#print(subaveleft)
-at_detector = apriltag.Detector(families='tag36h11')
+
+at_detector = actag.Detector(families='tag36h11',debug=False)
+ap_detector = apriltag.Detector(families='tag36h11')
+# at_detector=ap_detector  # 使用apriltag标签的时候需要加上这一句， 新标签注释掉
 resdata=[]
 
 rescnt = 0

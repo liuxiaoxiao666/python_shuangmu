@@ -26,23 +26,28 @@ def getROI(img): #返回全图
     '''img.shape:(2048*2592),设定2048为行数'''
     resize_num = 2
     imgresize = cv2.resize(img, ((int)(img.shape[1] / resize_num), (int)(img.shape[0] / resize_num)))
-    detectroi = at_detector.detect(imgresize)
+    detectroi = ap_detector.detect(imgresize)
     # if len(detectroi)!=0:
     #     print("detectroi:",detectroi[0].corners)
     list = []
+    (hang,lie)=img.shape
+    hang-=1
+    lie-=1
     maxpixhang = 0
     maxpixlie = 0
-    minpixhang = 2999
-    minpixlie = 4095
+    minpixhang = hang
+    minpixlie = lie
     for i in range(len(detectroi)):
         for j in range(4):
             maxpixhang = max(maxpixhang, detectroi[i].corners[j][1])
             maxpixlie = max(maxpixlie, detectroi[i].corners[j][0])
             minpixhang = min(minpixhang, detectroi[i].corners[j][1])
             minpixlie = min(minpixlie, detectroi[i].corners[j][0])
-    if minpixlie != 4095:
-        list = [[max((int)(minpixhang * 2 - 50), 0), max((int)(minpixlie * 2 - 50), 0)],
-                [min((int)(maxpixhang * 2 + 50), 2999), min((int)(maxpixlie * 2 + 50), 4095)]]
+    rangh=(maxpixhang-minpixhang)//2
+    rangl=(maxpixlie-minpixlie)//2
+    if minpixlie != lie:
+        list = [[max((int)(minpixhang- rangh) * resize_num , 0), max((int)(minpixlie - rangh)* resize_num , 0)],
+                [min((int)(maxpixhang+ rangl) * resize_num, hang), min((int)(maxpixlie+ rangl) * resize_num , lie)]]
     else:
         list = [[maxpixhang, maxpixlie], [minpixhang, minpixlie]]
     # print(list)
@@ -457,7 +462,7 @@ def getTags(img1, img2,P1, P2,R1,R2):
                 dst2=np.linalg.norm(dst)
                 ag=dst2/math.pi*180
                 testangledist['agv'].append(ag)
-                if len(testangledist['agv'])==30:
+                if len(testangledist['agv'])==1:
                     print(mean(testangledist['agv']))
                     testangledist['agv'].clear()
             # success, rotation, translation,inliers = cv2.solvePnPRansac(points3d, tagsL[i], camera_matrix1, dist_coeffs1,flags=cv2.SOLVEPNP_ITERATIVE

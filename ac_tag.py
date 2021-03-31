@@ -114,7 +114,7 @@ class Detector:
 
         params = cv2.SimpleBlobDetector_Params()
         params.filterByCircularity = True
-        params.minCircularity = 0.8
+        params.minCircularity = 0.1
         detector = cv2.SimpleBlobDetector_create(params)
         keypoints = detector.detect(original_image)
         kps = keypoints.copy()
@@ -180,6 +180,9 @@ class Detector:
             subarea=self._tags_2points(det.corners,gray.shape)
             ROI = subarea
             gray_roi = gray[ROI[0][0]:ROI[1][0] + 1, ROI[0][1]:ROI[1][1] + 1]
+            kernal=np.ones((3,3),np.uint8)
+            gray_roi=cv2.erode(gray_roi,kernal)
+
             startarr = np.array([ROI[0][1], ROI[0][0]])
             det.center -= startarr
             for i in range(4):
@@ -193,16 +196,21 @@ class Detector:
             kplist = []
             for kp in kps:
                 kplist.append((kp.pt[0], kp.pt[1]))
-            if len(kplist)!=4:
-                continue
-            kplist=self._sort(kplist,rpoints)
             if self._debug:
                 for j in range(4):
                     cv2.line(showpic, tuple(points[edges[j, 0]]), tuple(points[edges[j, 1]]), (0, 0, 255), 2)
                 showpic = cv2.drawKeypoints(showpic, kps, showpic, (0, 0, 255),
                                                  cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
                 allsh = cv2.drawKeypoints(allsh, allkps, np.array([]), (0, 0, 255),
-                                          cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+                                            cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+                cv2.imshow("imgall", allsh)
+                cv2.imshow("img", showpic)
+                cv2.waitKey(20)
+            # cv2.imshow("origin",gray_roi)
+            # cv2.waitKey()
+            if len(kplist)!=4:
+                continue
+            kplist=self._sort(kplist,rpoints)
             kplist=np.asarray(kplist)
             startarr = np.array([ROI[0][1], ROI[0][0]])
             det.center += startarr
