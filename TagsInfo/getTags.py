@@ -23,13 +23,9 @@ class Tag:
 
 
 def getROI(img): #返回全图
-    '''img.shape:(2048*2592),设定2048为行数'''
     resize_num = 2
     imgresize = cv2.resize(img, ((int)(img.shape[1] / resize_num), (int)(img.shape[0] / resize_num)))
     detectroi = ap_detector.detect(imgresize)
-    # if len(detectroi)!=0:
-    #     print("detectroi:",detectroi[0].corners)
-    list = []
     (hang,lie)=img.shape
     hang-=1
     lie-=1
@@ -54,24 +50,18 @@ def getROI(img): #返回全图
     return list
 
 
-def get3d(t1, t2, intr, B, tagIndex):
+def get3d(t1, t2, intr, B, tagIndex): #计算四个角点三维坐标，深度滤波
     '''
     :param t1: 图一某tag四个角点的亚像素坐标
     :param t2: 图二某tag四个角点的亚像素坐标
     :param intr: 相机内参（此处取左相机内参）
     :param B: baseline
     :return: points3d为四个角点三维坐标
-    https://blog.csdn.net/u010368556/article/details/59647848
-    双目视差法
     '''
-    # print(intr[0][0])
     t1 = np.array(t1)
-
     t2 = np.array(t2)
     points3d = []
     tempZ0 = intr[0][0] * B / (t1 - t2)[0][0]
-    # print(intr[0][0])
-    # print((t1 - t2)[0][0])
     avewinsize=60
     global ave, avepoints, jittycnt, count, depthlistpoints, depthlist, subPointsCntL, subPointsCntR
     if (fabs(tempZ0 - ave[tagIndex]) * 1000) > 0.14:
@@ -116,21 +106,6 @@ def get3d(t1, t2, intr, B, tagIndex):
         points3d.append((X, Y, Z))
     return points3d
 
-def getChessboard(img,flag,R_now,P_now):
-    global subPointsListL, subPointsListR, aveSubPointsListL, aveSubPointsListR, subPointsCntL, \
-        subPointsCntR, leftCameraJittyList, rightCameraJittyList, subaveleft, subaveright, idDict, roi_p
-
-    if len(img.shape) == 3:
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    else:
-        gray = img
-    ret, corners = cv2.findChessboardCorners(gray, (11, 8), None)  # 得到棋盘格角点坐标
-
-    if flag == 0:
-        subPoints = cv2.undistortPoints(corners[0], camera_matrix1, dist_coeffs1, R=R_now, P=P_now)
-    else:
-        subPoints = cv2.undistortPoints(corners[0], camera_matrix2, dist_coeffs2, R=R_now, P=P_now)
-    print("corners:", subPoints)
 
 def getTagInfo(img, flag,R_now,P_now):
     '''
@@ -152,14 +127,14 @@ def getTagInfo(img, flag,R_now,P_now):
     detection = []
     startpix = [0, 0]
     subareas = []
-    if roi_p["roi_state"] and roi_p["all_view"]==False:
-        # print("jubu")
+    if roi_p["all_view"] == False:
+        print("jubu")
         if flag == 0:
             subareas = roi_p["tagsinfol"]
         else:
             subareas = roi_p["tagsinfor"]
-    else: #返回全图
-        # print("quanju")
+    else:  # 返回全图
+        print("quanju")
         subareas = [getROI(gray)]
     tags = []
     tags_raw=[]
@@ -177,8 +152,15 @@ def getTagInfo(img, flag,R_now,P_now):
         # else:
         #     cv2.imwrite("img8.bmp", roi_before_equalized)
         try:
+            # nt['nt'] = time.time()
             detectroi = at_detector.detect(roi_before_equalized)
-
+            # print(time.time() - nt['nt'])
+            if flag==0:
+                img_list['roi1']=roi_before_equalized
+            else:
+                img_list['roi2'] = roi_before_equalized
+            # print("roi1 shape:", img_list['roi1'].shape)
+            # print("roi2 shape:",img_list['roi2'].shape)
             for numm in range(len(detectroi)):
                 if detectroi[numm].tag_id not in idDict:
                     k = len(idDict)
@@ -194,11 +176,9 @@ def getTagInfo(img, flag,R_now,P_now):
             detnum = tidlist[:]
             tidlist.sort()
             # print(detnum)
-            for tid in detnum:
+            for tid in detnum:            #滤波
                 m = detnum.index(tid)
-
                 points = detection[m].corners
-
                 subPoints_raw = points
                 # cv2.cornerSubPix(gray, subPoints_raw, (5, 5), (-1, -1), criteria)
                 subPoints_raw.shape=(4,1,2)
@@ -345,15 +325,19 @@ def getTags(img1, img2,P1, P2,R1,R2):
     :param TAG_SIZE:tag尺寸
     :return:一个列表，内含两个Tag类对象
     '''
+
     tagsL, tidL,tagsL_raw = getTagInfo(img1,  0,R1,P1)
     tagsR, tidR,tagsR_raw = getTagInfo(img2, 1,R2,P2)
+
+
     # getChessboard(img1,  0,R1,P1)
     # getChessboard(img2, 1, R2, P2)
 
-    if ids['tl']!=tidL or ids['tr']!=tidR:
-        roi_p["all_view"]=True
-    else:
-        roi_p["all_view"] =False
+    if ids['tl'] != []:
+        if ids['tl'] != tidL or ids['tr'] != tidR:
+            roi_p["all_view"] = True
+        else:
+            roi_p["all_view"] = False
 
     # print(ids['tl'],tidL)
     # 获取到的id和tag的数量不相同
@@ -383,15 +367,23 @@ def getTags(img1, img2,P1, P2,R1,R2):
                 tagsR.remove(tagsR[index])
 
         # return 3, "两相机拍摄的tag不同，无法配对"
+
     if len(tagsL) == 0:
         return 0, "没有拍摄到tag"
+
     else:
+
+
         # print(len(tidL), len(tidR), len(tagsL), len(tagsR))
         for i in range(len(tagsL)):
             # 通过两幅图像各自tag的像素坐标通过三角关系进行三维重建，得到角点的三维坐标，封装在points3d中
+
+
             points3d = get3d(tagsL[i], tagsR[i], P1, B, tidL[i])
+
             '''返回四个角点的三维坐标'''
-            # print("point3d",i," :",points3d)
+            print("point3d",tidL[i]," :",points3d)
+
             tagsL[i] = np.array(tagsL[i])
             points3d = np.array(points3d)
             # 得到位姿
@@ -523,25 +515,25 @@ def getTags(img1, img2,P1, P2,R1,R2):
                 test_area['ta_flag'] = False
                 test_area['finish'] = True
 
-        if roi_p["initstart"]:
-            if roi_p["initnum"] < 2:
-                roi_p["initnum"] += 1
-                if len(tags) >= roi_p["tagsnum"]:
-                    ids['tl'] = tidL
-                    ids['tr'] = tidR
-                    roi_p["tagsnum"] = len(tags)
-                    roi_p["tagsinfol"].clear()
-                    roi_p["tagsinfor"].clear()
-                    for t in range(len(tags)):
-                        roi_p["tagsinfol"].append(tags_2points(tagsL_raw[t]))
-                        roi_p["tagsinfor"].append(tags_2points(tagsR_raw[t]))
-            else:
-                roi_p["roi_state"] = True #
+        if roi_p["initnum"] < 2 and roi_p["all_view"]==True:
+            roi_p["initnum"] += 1
+            if len(tags) >= roi_p["tagsnum"]:
+                ids['tl'] = tidL
+                ids['tr'] = tidR
+                roi_p["tagsnum"] = len(tags)
                 roi_p["tagsinfol"].clear()
                 roi_p["tagsinfor"].clear()
                 for t in range(len(tags)):
                     roi_p["tagsinfol"].append(tags_2points(tagsL_raw[t]))
                     roi_p["tagsinfor"].append(tags_2points(tagsR_raw[t]))
+        else:
+            roi_p["all_view"] = False  #
+            roi_p["initnum"] = 0
+            roi_p["tagsinfol"].clear()
+            roi_p["tagsinfor"].clear()
+            for t in range(len(tags)):
+                roi_p["tagsinfol"].append(tags_2points(tagsL_raw[t]))
+                roi_p["tagsinfor"].append(tags_2points(tagsR_raw[t]))
 
         return 1, tags, tidL  # '''[0].points[0][2] * 1000'''
 

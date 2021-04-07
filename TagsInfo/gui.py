@@ -11,7 +11,7 @@ import csv
 '''可视化布局'''
 title = 'Position detection'
 window_width = 720
-window_height = 670
+window_height = 720
 image_width = int(window_width * 0.5)
 image_height = int(window_height * 0.5)
 imagepos_x = 0
@@ -65,12 +65,22 @@ def video():
                 global img_list, cntcntc, res, result, shared_lock,save_p
 
                 shared_lock.acquire()
-                image1 = img_list['img1']
-                image2 = img_list['img2']
+                '''
+                if len(img_list['roi1'])==0 or len(img_list['roi2'])==0:
+                    image1 = img_list['img1'].copy()
+                    image2 = img_list['img2'].copy()
+                else:
+                    image1=img_list['roi1'].copy()
+                    image1=np.array(image1)
+                    image2 = img_list['roi2'].copy()
+                    image2=np.array(image2)
+                '''
                 # print("image1.shape:",image1.shape)
                 # print("image2.shape:",image2.shape)
                 # print("image1:",image1)
                 # print("image2:",image2)
+                image1 = img_list['img1'].copy()
+                image2 = img_list['img2'].copy()
                 tag = tagpos.copy()
                 shared_lock.release()
                 if save_p['finish']:
@@ -116,11 +126,12 @@ def video():
 
 def testangle():
     testangledist['flagangle']=True
-    print("test")
+    print("testangle")
 def testmov():
     testmovdist['flagmov']=True
     print("testmov")
-
+def dbq_test():
+    print("dbq_test")
 win = tk.Tk()
 win.title(title)
 win.geometry(str(window_width) + 'x' + str(window_height))
@@ -178,6 +189,8 @@ ta = tk.Button(win, text='范围测试', font=('Arial', 12), width=10, height=1,
 ta.place(x=70, y=550)
 wd = tk.Button(win, text='保存位移数据', font=('Arial', 12), width=10, height=1, command=w_data)
 wd.place(x=70, y=590)
+dbq = tk.Button(win, text='多标签测试', font=('Arial', 12), width=10, height=1, command=dbq_test)
+dbq.place(x=70, y=630)
 canvas2 = Canvas(win, bg='white', width=image_width, height=image_height)
 canvas2.place(x=360, y=0)
 canvas4 = Canvas(win, bg='white', width=image_width, height=image_height)

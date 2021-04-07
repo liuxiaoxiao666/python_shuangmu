@@ -37,7 +37,9 @@ def calculateThread():
         shared_lock.release()
         # print("bbb:",time.time()-timett)
         global result
+
         res = getTags(pic1, pic2,P1, P2,R1,R2)
+
         '''
         返回值结构如下：tags points:
         [[ 0.11659958 -0.05395726  0.76397341]
