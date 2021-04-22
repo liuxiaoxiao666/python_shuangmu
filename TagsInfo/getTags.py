@@ -556,8 +556,8 @@ def tags_2points(tagps):
         minpixhang = min(minpixhang, points[1])
         minpixlie = min(minpixlie, points[0])
     if minpixlie != 4095:
-        addhang=(maxpixhang-minpixhang)*0.15
-        addlie = (maxpixlie - minpixlie) * 0.15
+        addhang=(maxpixhang-minpixhang)*0.25
+        addlie = (maxpixlie - minpixlie) * 0.25
         list = [[max((int)(minpixhang - addhang), 0), max((int)(minpixlie - addlie), 0)],
                 [min((int)(maxpixhang + addhang), 2999), min((int)(maxpixlie + addlie), 4095)]]
     else:
