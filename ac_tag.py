@@ -3,6 +3,7 @@ import time
 import numpy as np
 import pupil_apriltags as apriltag
 import math
+
 """A detector for new tag.This program creates two classes that 
 are used to detect new tags and extract information from them.
 The new tag is designed based on apriltag.There are four circle
@@ -74,7 +75,7 @@ class Detector:
         '''
         triarea = self._triangleArea(a, b, e) + self._triangleArea(b, c, e) + self._triangleArea(c, d, e) + self._triangleArea(a, d, e)
         qarea = self._triangleArea(a, b, c) + self._triangleArea(a, d, c)
-        return triarea == qarea
+        return math.fabs(triarea-qarea)<0.000001
 
     def _ridiusillegal(self,r, l):
         """
@@ -96,12 +97,28 @@ class Detector:
         :param keypoint: 候选圆
         :return: True 圆心和角点之间的距离不合理
         """
+
         if self._isinQurd(a, b, c, d, (keypoint.pt[0], keypoint.pt[1])):
             return True
         l = [a, b, c, d]
-        for p in l:
-            if edgel / 15 < self._getlength(p, keypoint.pt) < edgel / 4:
-                return False
+        # print(keypoint)
+        # print("edgel", edgel)
+        min_num=0
+        min_len=9999
+        for i in range(len(l)):
+            # print("len",self._getlength(p, keypoint.pt))
+            tmp_min=self._getlength(l[i], keypoint.pt)
+            if min_len>tmp_min:
+                min_len=tmp_min
+                min_num=i
+        max_num=(min_num+2)%4
+        xl_0 = np.array(l[min_num] - l[max_num])
+        xl_1=np.array(keypoint.pt-l[max_num])
+        res=self.getcos(xl_0,xl_1)
+        print("res:",res)
+
+        if 1-res<0.01:
+            return False
         return True
 
     def _circle_nearby(self,original_image, a, b, c, d):
@@ -114,12 +131,16 @@ class Detector:
 
         params = cv2.SimpleBlobDetector_Params()
         params.filterByCircularity = True
-        params.minCircularity = 0.1
+        params.minCircularity = 0.01
+        # params.filterByInertia=True
+        # params.minInertiaRatio=0.1
+        # params.maxInertiaRatio=1
         detector = cv2.SimpleBlobDetector_create(params)
         keypoints = detector.detect(original_image)
         kps = keypoints.copy()
         for keypoint in kps:
             if self._regeonillegal(a, b, c, d, edgel, keypoint):
+
                 keypoints.remove(keypoint)
         return keypoints, kps
 
@@ -161,6 +182,10 @@ class Detector:
             list = [[maxpixhang, maxpixlie], [minpixhang, minpixlie]]
         return list
 
+    def getcos(self,a, b):
+        la = np.sqrt(a.dot(a))
+        lb = np.sqrt(b.dot(b))
+        return a.dot(b) / (la * lb)
     def detect(self,img):
         return_info=[]
         gray = img.copy()
@@ -177,6 +202,7 @@ class Detector:
         '''检测方形'''
         allsh=showpic.copy()
         for det in apriltag_detections:
+
             subarea=self._tags_2points(det.corners,gray.shape)
             ROI = subarea
             gray_roi = gray[ROI[0][0]:ROI[1][0] + 1, ROI[0][1]:ROI[1][1] + 1]
@@ -191,8 +217,19 @@ class Detector:
             points = det.corners.astype('int')
             '''对圆形检测区域进行设置，按照边长进行适当的扩展'''
             kps, allkps = self._circle_nearby(gray_roi, rpoints[0], rpoints[1], rpoints[2], rpoints[3])
-
-
+            # print(kps)
+            # print(allkps)
+            # xl_0 = np.array(rpoints[1] - rpoints[3])
+            # print(xl_0)
+            # xl_1=np.array(rpoints[0]-rpoints[2])
+            # print(xl_1)
+            # for i in range(5):
+            #     print(i)
+            #     for j in range(4):
+            #         xl_2=np.array(allkps[i].pt-rpoints[j])
+            #
+            #         print(self.getcos(xl_1,xl_2))
+            #         print(self.getcos(xl_0, xl_2))
             kplist = []
             for kp in kps:
                 kplist.append((kp.pt[0], kp.pt[1]))
@@ -205,7 +242,7 @@ class Detector:
                                             cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
                 cv2.imshow("imgall", allsh)
                 cv2.imshow("img", showpic)
-                cv2.waitKey(20)
+                cv2.waitKey()
             # cv2.imshow("origin",gray_roi)
             # cv2.waitKey()
             if len(kplist)!=4:
@@ -233,11 +270,13 @@ class Detector:
 
 
 if __name__ == '__main__':
-    filepath="circletest.jpg"
+    filepath="nt2.bmp"
     img=cv2.imread(filename=filepath)
+
+
     at_detector=Detector(families='tag36h11',debug=True)
-    detections,resultimage=at_detector.detect(img)
+    detections=at_detector.detect(img)
     print(detections)
     cv2.imshow("origin image",img)
-    cv2.imshow("output image",resultimage)
+    # cv2.imshow("output image",resultimage)
     cv2.waitKey()
