@@ -10,10 +10,10 @@ import csv
 
 '''可视化布局'''
 title = 'Position detection'
-window_width = 720
+window_width = 760
 window_height = 720
-image_width = int(window_width * 0.5)
-image_height = int(window_height * 0.5)
+image_width = 460
+image_height = int(image_width*0.75)
 imagepos_x = 0
 imagepos_y = 0
 butpos_x = 450
@@ -192,7 +192,7 @@ wd.place(x=70, y=590)
 dbq = tk.Button(win, text='多标签测试', font=('Arial', 12), width=10, height=1, command=dbq_test)
 dbq.place(x=70, y=630)
 canvas2 = Canvas(win, bg='white', width=image_width, height=image_height)
-canvas2.place(x=360, y=0)
+canvas2.place(x=295, y=0)
 canvas4 = Canvas(win, bg='white', width=image_width, height=image_height)
-canvas4.place(x=360, y=270)
+canvas4.place(x=295, y=image_height)
 # video()

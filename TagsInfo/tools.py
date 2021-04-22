@@ -48,7 +48,7 @@ def getangle(Rx,Ry,Rz):
     h=np.array([[getcos(cx,Rx),getcos(cx,Ry),getcos(cx,Rz)],
             [getcos(cy,Rx),getcos(cy,Ry),getcos(cy,Rz)],
             [getcos(cz,Rx),getcos(cz,Ry),getcos(cz,Rz)]])
-    return wRo_to_euler(h)
+    return wRo_to_euler(h),h
 
 def mad(data):
     return mean(absolute(data - mean(data)))

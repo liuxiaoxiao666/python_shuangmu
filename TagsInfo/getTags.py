@@ -7,19 +7,23 @@ import time
 import pandas as pd
 import os
 class Tag:
-    def __init__(self, points, disToSurface, rotation):
+    def __init__(self, points, disToSurface, rotation,R):
         '''
         :param points:此tag四个角点的三维坐标，二维4*3列表
-        :param translation: 此tag平移矩阵
-        :param rotation: 此tag旋转矩阵
+        :param disToSurface:左相机到标签平面的距离
+        :param translation: 此tag平移矩阵,定义某一个点的位置
+        :param rotation: 此tag绕三个轴的旋转度
+        :param R:此tag旋转矩阵
         '''
         self.points = points
-        self.disToSurface = disToSurface
+        self.disToSurface = disToSurface  # 未启用
         self.rotation = rotation
+        self.translation=points[0]
+        self.R=R
 
     def __str__(self):
-        return "points:\n{0}\ndisToSurface:\n{1}\nrotation:\n{2}\n".format(self.points, self.disToSurface,
-                                                                           self.rotation)
+        return "points:\n{0}\ndisToSurface:\n{1}\nrotation:\n{2}\nrotation:\n{3}\nrotation:\n{4}\n".format(self.points, self.disToSurface,
+                                                                           self.rotation,self.translation,self.R)
 
 
 def getROI(img): #返回全图
@@ -128,13 +132,13 @@ def getTagInfo(img, flag,R_now,P_now):
     startpix = [0, 0]
     subareas = []
     if roi_p["all_view"] == False:
-        print("jubu")
+        # print("jubu")
         if flag == 0:
             subareas = roi_p["tagsinfol"]
         else:
             subareas = roi_p["tagsinfor"]
     else:  # 返回全图
-        print("quanju")
+        # print("quanju")
         subareas = [getROI(gray)]
     tags = []
     tags_raw=[]
@@ -382,7 +386,7 @@ def getTags(img1, img2,P1, P2,R1,R2):
             points3d = get3d(tagsL[i], tagsR[i], P1, B, tidL[i])
 
             '''返回四个角点的三维坐标'''
-            print("point3d",tidL[i]," :",points3d)
+            # print("point3d",tidL[i]," :",points3d)
 
             tagsL[i] = np.array(tagsL[i])
             points3d = np.array(points3d)
@@ -457,9 +461,9 @@ def getTags(img1, img2,P1, P2,R1,R2):
                 if len(testangledist['agv'])==1:
                     print(mean(testangledist['agv']))
                     testangledist['agv'].clear()
-            # success, rotation, translation,inliers = cv2.solvePnPRansac(points3d, tagsL[i], camera_matrix1, dist_coeffs1,flags=cv2.SOLVEPNP_ITERATIVE
+            angle_result=getangle(xAxis,yAxis,zAxis)
             tags.append(Tag(points3d, getDisToSurface(points3d[0], points3d[1], points3d[2]),
-                            getangle(xAxis,yAxis,zAxis)))
+                            angle_result[0],angle_result[1]))
             # print("length:",100*sqrt((tags[0].points[0][2] -tags[0].points[1][2])*(tags[0].points[0][2] -tags[0].points[1][2])+
             #                      (tags[0].points[0][1] -tags[0].points[1][1])*(tags[0].points[0][1] -tags[0].points[1][1])+
             #                      (tags[0].points[0][0] -tags[0].points[1][0])*(tags[0].points[0][0] -tags[0].points[1][0])))
